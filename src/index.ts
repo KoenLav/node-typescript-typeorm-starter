@@ -1,49 +1,19 @@
-import cors from "cors";
-import express from "express";
-import { createConnection } from "typeorm";
-import { getCustomerList, postCustomer } from "./controllers/customer";
-import { getitemList, postitem } from "./controllers/item";
-import { getorderList, postorder } from "./controllers/order";
-import { getStock, getStockList, postStock } from "./controllers/stock";
-import { authenticateMiddleware, handleUserLogin, handleUserSignup } from "./controllers/user";
-const app = express();
-
-app.use(express.json(), express.urlencoded(), cors());
-
-const port = process.env.PORT || 3000; // default port to listen
+import { createConnection, getRepository } from "typeorm";
+import { User } from "./models/user";
 
 (async () => {
   const connection = await createConnection({
-    type: "sqlite",
-    database: "temp/sqlitedb.db",
+    type: 'mysql',
+    database: 'test',
+    username: 'root',
     synchronize: true,
-    logging: false,
-    entities: ["src/models/**/*.ts"],
-    migrations: ["src/migration/**/*.ts"],
-    subscribers: ["src/subscriber/**/*.ts"]
+    logging: true,
+    logger: 'file',
+    entities: ['src/models/**/*.ts'],
+    migrations: ['src/migration/**/*.ts'],
   });
-  app.get("/", function(req, res){
-    res.set('Content-Type', 'text/html');
-    res.send(new Buffer('<div style="display:flex;align-items:center;justify-content:center"><h1 style="font-size:14em">👻</h1></div>'));
-});
 
-  app.post("/login", handleUserLogin);
-  app.post("/signup", handleUserSignup);
-  app.route("/stock").get(getStockList);
-  app.post("/stock", postStock);
+  const user = await getRepository(User).findOne({ email: 'test@email.com' }, { relations: ['roles'] });
 
-  app.route("/customer").get(getCustomerList);
-  app.post("/customer", postCustomer);
-
-  app.route("/item").get(getitemList);
-  app.post("/item", postitem);
-
-  app.route("/order").get(getorderList);
-  app.post("/order", postorder);
-  app.use("/stock/:name", authenticateMiddleware);
-  app.get("/stock/:name", getStock);
-
-  app.listen(port, () => {
-    console.log(`server started at http://localhost:${port}`);
-  });
+  console.log(user);
 })();
